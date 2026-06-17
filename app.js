@@ -6,6 +6,8 @@ const bodyParser = require("body-parser");
 const expressHbs = require("express-handlebars");
 const app = express();
 
+const get404Controller = require("./controllers/error");
+
 // app.set("view engine", "pug"); // This line sets the view engine for the Express application to "pug". Pug is a template engine that allows you to generate HTML dynamically. By setting the view engine, you can render Pug templates when handling requests and send the generated HTML as a response to the client.
 
 // app.set("views", "views"); // This line sets the directory where the view templates are located. In this case, it specifies that the views are located in a folder named "views". When you render a view, Express will look for the template files in this directory. For example, if you render a view called "index", Express will look for a file named "index.pug" (or "index.handlebars" if using Handlebars) in the "views" directory.
@@ -34,10 +36,7 @@ app.use(express.static(path.join(__dirname, "public"))); // This middleware serv
 app.use("/admin", adminData.routes); // This middleware will be executed for any route that starts with "/admin". It will pass the request to the adminRoutes router for further handling.
 app.use(shopRoutes);
 
-app.use((req, res, next) => {
-  // res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
-  res.status(404).render("404", { docTitle: "Page Not Found" });
-});
+app.use(get404Controller.get404); // This line adds a middleware function to handle 404 errors. If no route matches the incoming request, this middleware will be executed, and it will render a 404 error page or send a 404 response to the client.
 
 // const server = http.createServer(app);
 // server.listen(3000)
