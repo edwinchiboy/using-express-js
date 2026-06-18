@@ -33,7 +33,7 @@ const shopRoutes = require("./routes/shop");
 app.use(bodyParser.urlencoded({ extended: false })); // Parses incoming request bodies in a middleware before your handlers, available under the req.body property
 app.use(express.static(path.join(__dirname, "public"))); // This middleware serves static files from the "public" directory. It allows you to access files like CSS, images, and JavaScript files directly from the browser without needing to define specific routes for them.
 
-app.use("/admin", adminData.routes); // This middleware will be executed for any route that starts with "/admin". It will pass the request to the adminRoutes router for further handling.
+app.use("/admin", adminData); // This middleware will be executed for any route that starts with "/admin". It will pass the request to the adminRoutes router for further handling.
 app.use(shopRoutes);
 
 app.use(get404Controller.get404); // This line adds a middleware function to handle 404 errors. If no route matches the incoming request, this middleware will be executed, and it will render a 404 error page or send a 404 response to the client.

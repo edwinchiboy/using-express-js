@@ -1,30 +1,23 @@
-const path = require("path");
-const express = require("express");
+const path = require('path');
+
+const express = require('express');
+
+const shopController = require('../controllers/shop');
+
 const router = express.Router();
 
-const rootDir = require("../util/path");
-const adminData = require("./admin");
+router.get('/', shopController.getIndex);
 
-// app.use((req, res, next) => {
-//     console.log('First middleware');
-//     next();// Allows the request to continue to the next middleware function in the stack
-// });
+router.get('/products', shopController.getProducts);
 
-// router.get("/",(req, res) => {
-//     // console.log('second middleware');
-//     res.status(200).send('<h1>Hello from Express.js</h1>');
-// });
+router.get('/products/:productId', shopController.getProduct);
 
-router.get("/", (req, res) => {
-  // res.status(200).sendFile(path.join(rootDir, 'views', 'shop.html'));
-  const products = adminData.products;
-  res.status(200).render("shop", {
-    prods: products,
-    docTitle: "Shop",
-    path: "/",
-    activeShop: true,
-    productCSS: true,
-  });
-});
+router.get('/cart', shopController.getCart);
+
+router.post('/cart', shopController.postCart);
+
+router.get('/orders', shopController.getOrders);
+
+router.get('/checkout', shopController.getCheckout);
 
 module.exports = router;
