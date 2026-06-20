@@ -10,15 +10,24 @@
 
                             <li>
                                 <p>
-                                    <%= p.productData.title %> (<%= p.qty %>)
+                                <h1>
+                                    <%= p.title %>
+                                </h1>
+                                <h2>Quantity: (<%= p.cart_item.quantity%>)</h2>
                                 </p>
                                 <form action="/cart-delete-item" method="POST">
-                                    <input type="hidden" value="<%= p.productData.id %>" name="productId">
+                                    <input type="hidden" value="<%= p.id %>" name="productId">
                                     <button class="btn" type="submit">Delete</button>
                                 </form>
                             </li>
                             <%}) %>
                     </ul>
+                    <hr>
+                    <div class="centered">
+                        <form action="/create-order" method="POST">
+                            <button class="btn" type="submit"> Order Now!</button>
+                        </form>
+                    </div>
 
                     <%} else { %>
                         <h1>No Products in the Cart!</h1>
