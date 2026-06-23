@@ -1,3 +1,4 @@
+const product = require("../models/product");
 const Product = require("../models/product");
 
 exports.getAddProduct = (req, res, next) => {
@@ -22,36 +23,58 @@ exports.getAddProduct = (req, res, next) => {
 //     .catch((err) => console.log(err));
 // };
 
+// exports.postAddProduct = (req, res, next) => {
+//   const title = req.body.title;
+//   const imageUrl = req.body.imageUrl;
+//   const price = req.body.price;
+//   const description = req.body.description;
+
+//   // req.user // using magic association methods
+//   //   .createProduct({
+//   //     title: title,
+//   //     price: price,
+//   //     imageUrl: imageUrl,
+//   //     description: description,
+//   //   })
+
+//   // Product.create({
+//   //   title: title,
+//   //   price: price,
+//   //   imageUrl: imageUrl,
+//   //   description: description
+//   // userId: req.user.id,
+//   // })
+
+//   const product = new Product(
+//     title,
+//     price,
+//     description,
+//     imageUrl,
+//     null,
+//     req.user._id,
+//   );
+//   product
+//     .save()
+//     .then((result) => {
+//       res.redirect("/admin/products");
+//     })
+//     .catch((err) => {
+//       console.log(err);
+//     });
+// };
+
 exports.postAddProduct = (req, res, next) => {
   const title = req.body.title;
   const imageUrl = req.body.imageUrl;
   const price = req.body.price;
   const description = req.body.description;
-
-  // req.user // using magic association methods
-  //   .createProduct({
-  //     title: title,
-  //     price: price,
-  //     imageUrl: imageUrl,
-  //     description: description,
-  //   })
-
-  // Product.create({
-  //   title: title,
-  //   price: price,
-  //   imageUrl: imageUrl,
-  //   description: description
-  // userId: req.user.id,
-  // })
-
-  const product = new Product(
-    title,
-    price,
-    description,
-    imageUrl,
-    null,
-    req.user._id,
-  );
+  const product = new Product({
+    title: title,
+    price: price,
+    description: description,
+    imageUrl: imageUrl,
+    userId: req.user,
+  });
   product
     .save()
     .then((result) => {
@@ -61,7 +84,6 @@ exports.postAddProduct = (req, res, next) => {
       console.log(err);
     });
 };
-
 // exports.getEditProduct = (req, res, next) => {
 //   const editMode = req.query.edit;
 //   if (!editMode) {
@@ -176,21 +198,43 @@ exports.getEditProduct = (req, res, next) => {
 //     });
 // };
 
+// exports.postEditProduct = (req, res, next) => {
+//   const prodId = req.body.productId;
+//   const updatedTitle = req.body.title;
+//   const updatedPrice = req.body.price;
+//   const updatedImageUrl = req.body.imageUrl;
+//   const updatedDesc = req.body.description;
+//   const updatedProduct = new Product(
+//     updatedTitle,
+//     updatedImageUrl,
+//     updatedDesc,
+//     updatedPrice,
+//     prodId,
+//   );
+//   updatedProduct
+//     .save()
+//     .then((response) => {
+//       res.redirect("/admin/products");
+//     })
+//     .catch((error) => {
+//       console.log(error);
+//     });
+// };
+
 exports.postEditProduct = (req, res, next) => {
   const prodId = req.body.productId;
   const updatedTitle = req.body.title;
   const updatedPrice = req.body.price;
   const updatedImageUrl = req.body.imageUrl;
   const updatedDesc = req.body.description;
-  const updatedProduct = new Product(
-    updatedTitle,
-    updatedImageUrl,
-    updatedDesc,
-    updatedPrice,
-    prodId,
-  );
-  updatedProduct
-    .save()
+  Product.findById(prodId)
+    .then((product) => {
+      product.title = updatedTitle;
+      product.price = updatedPrice;
+      product.description = updatedDesc;
+      product.imageUrl = updatedImageUrl;
+      return product.save();
+    })
     .then((response) => {
       res.redirect("/admin/products");
     })
@@ -225,9 +269,23 @@ exports.postEditProduct = (req, res, next) => {
 //     .catch((err) => console.log(err));
 // };
 
+// exports.getProducts = (req, res, next) => {
+//   Product.fetchAll()
+//     // Product.findAll()
+//     .then((products) => {
+//       res.render("admin/products", {
+//         prods: products,
+//         pageTitle: "Admin Products",
+//         path: "/admin/products",
+//       });
+//     })
+//     .catch((err) => console.log(err));
+// };
+
 exports.getProducts = (req, res, next) => {
-  Product.fetchAll()
-    // Product.findAll()
+  Product.find()
+    // .select(' title price -_id')// use to select the fields that should be returned
+    .populate("userId", "name") // for fecching all the user object and return just the name and Id
     .then((products) => {
       res.render("admin/products", {
         prods: products,
@@ -259,9 +317,18 @@ exports.getProducts = (req, res, next) => {
 //     .catch((err) => console.log(err));
 // };
 
+// exports.postDeleteProduct = (req, res, next) => {
+//   const prodId = req.body.productId;
+//   Product.deleteById(prodId)
+//     .then(() => {
+//       res.redirect("/admin/products");
+//     })
+//     .catch((err) => console.log(err));
+// };
+
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.deleteById(prodId)
+  Product.findByIdAndDelete(prodId)
     .then(() => {
       res.redirect("/admin/products");
     })

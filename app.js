@@ -3,8 +3,10 @@ const path = require("path");
 
 const express = require("express");
 const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
+
 const expressHbs = require("express-handlebars");
-const mongoConnect = require("./util/database").mongoConnect;
+// const mongoConnect = require("./util/database").mongoConnect;
 const User = require("./models/user");
 
 const app = express();
@@ -54,9 +56,10 @@ app.use((req, res, next) => {
   //     console.log(err);
   //   });'
 
-  User.findById("6a391735ec2000a86895c494")
+  User.findById("6a3a661b2353f2748a5f9d52")
     .then((user) => {
-      req.user = new User(user.name, user.email, user.cart, user._id); // Creating associations using sequelize
+      // req.user = new User(user.name, user.email, user.cart, user._id); // Creating associations using mongo db
+      req.user = user;
       next();
     })
     .catch((err) => {
@@ -107,6 +110,32 @@ app.use(get404Controller.get404); // This line adds a middleware function to han
 //     console.log(err);
 //   });
 
-mongoConnect(() => {
-  app.listen(3000);
-});
+// mongoConnect(() => {
+//   app.listen(3000);
+// });
+
+mongoose
+  .connect(
+    "mongodb+srv://choboyedeh17:Qwert!2345@cluster0.pnin6iw.mongodb.net/shop?appName=Cluster0",
+  )
+  .then((result) => {
+    return User.findOne().then((user) => {
+      if (!user) {
+        const user = new User({
+          name: "Chiboy",
+          email: "choboy.edeh17@Gmail.com",
+          cart: {
+            items: [],
+          },
+        });
+        return user.save();
+      }
+      return user;
+    });
+  })
+  .then((result) => {
+    app.listen(3000);
+  })
+  .catch((err) => {
+    console.log(err);
+  });
