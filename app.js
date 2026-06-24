@@ -4,12 +4,22 @@ const path = require("path");
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const session = require("express-session");
+const MongoDBStore = require("connect-mongodb-session")(session);
 
 const expressHbs = require("express-handlebars");
 // const mongoConnect = require("./util/database").mongoConnect;
 const User = require("./models/user");
 
+const MONGODB_URI =
+  "mongodb+srv://choboyedeh17:Qwert%212345@cluster0.pnin6iw.mongodb.net/shop?appName=Cluster0";
+
 const app = express();
+
+const store = new MongoDBStore({
+  uri: MONGODB_URI,
+  collection: "sessions",
+});
 
 const get404Controller = require("./controllers/error");
 // const sequelize = require("./util/database");
@@ -41,10 +51,21 @@ app.set("views", "views"); // This line sets the directory where the view templa
 
 const adminRoute = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
+const authRoutes = require("./routes/auth");
+
 // const { FORCE } = require("sequelize/lib/index-hints");
 
 app.use(bodyParser.urlencoded({ extended: false })); // Parses incoming request bodies in a middleware before your handlers, available under the req.body property
 app.use(express.static(path.join(__dirname, "public"))); // This middleware serves static files from the "public" directory. It allows you to access files like CSS, images, and JavaScript files directly from the browser without needing to define specific routes for them.
+
+app.use(
+  session({
+    secret: "Qwert!2345",
+    resave: false,
+    saveUninitialized: false,
+    store: store, //cookie: { maxAge}
+  }),
+);
 
 app.use((req, res, next) => {
   // User.findByPk(1)
@@ -57,8 +78,16 @@ app.use((req, res, next) => {
   //   });'
 
   User.findById("6a3a661b2353f2748a5f9d52")
+    // User.findById(req.session.user_id)
     .then((user) => {
       // req.user = new User(user.name, user.email, user.cart, user._id); // Creating associations using mongo db
+
+      // FIX: Store user data by converting the document to a plain object
+      // This turns the Mongoose ObjectId into a plain text string
+
+      if (!req.session.user) {
+        return next();
+      }
       req.user = user;
       next();
     })
@@ -69,6 +98,8 @@ app.use((req, res, next) => {
 
 app.use("/admin", adminRoute); // This middleware will be executed for any route that starts with "/admin". It will pass the request to the adminRoutes router for further handling.
 app.use(shopRoutes);
+
+app.use(authRoutes);
 
 app.use(get404Controller.get404); // This line adds a middleware function to handle 404 errors. If no route matches the incoming request, this middleware will be executed, and it will render a 404 error page or send a 404 response to the client.
 
@@ -115,9 +146,7 @@ app.use(get404Controller.get404); // This line adds a middleware function to han
 // });
 
 mongoose
-  .connect(
-    "mongodb+srv://choboyedeh17:Qwert!2345@cluster0.pnin6iw.mongodb.net/shop?appName=Cluster0",
-  )
+  .connect(MONGODB_URI)
   .then((result) => {
     return User.findOne().then((user) => {
       if (!user) {
