@@ -229,15 +229,18 @@ exports.postEditProduct = (req, res, next) => {
   const updatedDesc = req.body.description;
   Product.findById(prodId)
     .then((product) => {
+      if (product.userId.toString() !== req.user._id.toString()) {
+        return res.redirect("/");
+      }
       product.title = updatedTitle;
       product.price = updatedPrice;
       product.description = updatedDesc;
       product.imageUrl = updatedImageUrl;
-      return product.save();
+      return product.save().then((response) => {
+        res.redirect("/admin/products");
+      });
     })
-    .then((response) => {
-      res.redirect("/admin/products");
-    })
+
     .catch((error) => {
       console.log(error);
     });
@@ -283,7 +286,7 @@ exports.postEditProduct = (req, res, next) => {
 // };
 
 exports.getProducts = (req, res, next) => {
-  Product.find()
+  Product.find({ userId: req.user._id })
     // .select(' title price -_id')// use to select the fields that should be returned
     .populate("userId", "name") // for fecching all the user object and return just the name and Id
     .then((products) => {
@@ -328,7 +331,13 @@ exports.getProducts = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.findByIdAndDelete(prodId)
+  // Product.findByIdAndDelete(prodId)
+  //   .then(() => {
+  //     res.redirect("/admin/products");
+  //   })
+  //   .catch((err) => console.log(err));
+
+  Product.deleteOne({ _id: prodId, userId: req.us._id })
     .then(() => {
       res.redirect("/admin/products");
     })
