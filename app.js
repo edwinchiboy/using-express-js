@@ -25,7 +25,7 @@ const store = new MongoDBStore({
 
 const csrfProtection = csrf();
 
-const get404Controller = require("./controllers/error");
+const errorController = require("./controllers/error");
 // const sequelize = require("./util/database");
 // const Product = require("./models/product");
 // const User = require("./models/user");
@@ -75,6 +75,14 @@ app.use(csrfProtection);
 app.use(flash());
 
 app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+
+app.use((req, res, next) => {
+  throw new Error(err); //used in synchronous code blocks
+
   // User.findByPk(1)
   //   .then((user) => {
   //     req.user = user; // Creating associations using sequelize
@@ -93,20 +101,12 @@ app.use((req, res, next) => {
       if (!user) {
         return next();
       }
-
       req.user = user;
       next();
     })
     .catch((err) => {
-      console.log(err);
-      next(err);
+      next(new Error(err)); // Used in async code blocks
     });
-});
-
-app.use((req, res, next) => {
-  res.locals.isAuthenticated = req.session.isLoggedIn;
-  res.locals.csrfToken = req.csrfToken();
-  next();
 });
 
 app.use("/admin", adminRoute); // This middleware will be executed for any route that starts with "/admin". It will pass the request to the adminRoutes router for further handling.
@@ -114,7 +114,9 @@ app.use(shopRoutes);
 
 app.use(authRoutes);
 
-app.use(get404Controller.get404); // This line adds a middleware function to handle 404 errors. If no route matches the incoming request, this middleware will be executed, and it will render a 404 error page or send a 404 response to the client.
+app.use("/500", errorController.get500);
+
+app.use(errorController.get404); // This line adds a middleware function to handle 404 errors. If no route matches the incoming request, this middleware will be executed, and it will render a 404 error page or send a 404 response to the client.
 
 // const server = http.createServer(app);
 // server.listen(3000)
@@ -157,6 +159,13 @@ app.use(get404Controller.get404); // This line adds a middleware function to han
 // mongoConnect(() => {
 //   app.listen(3000);
 // });
+
+app.use((error, req, res, next) => {
+  res.status(500).render("500", {
+    pageTitle: "Error",
+    path: "/500",
+  });
+});
 
 mongoose
   .connect(MONGODB_URI)
