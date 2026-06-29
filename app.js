@@ -7,7 +7,9 @@ const mongoose = require("mongoose");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
 const csrf = require("csurf");
+
 const flash = require("connect-flash");
+const multer = require("multer");
 
 const expressHbs = require("express-handlebars");
 // const mongoConnect = require("./util/database").mongoConnect;
@@ -17,6 +19,27 @@ const MONGODB_URI =
   "mongodb+srv://choboyedeh17:Qwert%212345@cluster0.pnin6iw.mongodb.net/shop?appName=Cluster0";
 
 const app = express();
+
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/jpeg"
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "images");
+  },
+  filename: (req, file, cb) => {
+    cb(null, new Date().toISOString() + "-" + file.originalname);
+  },
+});
 
 const store = new MongoDBStore({
   uri: MONGODB_URI,
@@ -59,8 +82,13 @@ const authRoutes = require("./routes/auth");
 
 // const { FORCE } = require("sequelize/lib/index-hints");
 
-app.use(bodyParser.urlencoded({ extended: false })); // Parses incoming request bodies in a middleware before your handlers, available under the req.body property
+app.use(bodyParser.urlencoded({ extended: false })); // Parses text incoming request bodies in a middleware before your handlers, available under the req.body property
+
+app.use(
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single("image"),
+);
 app.use(express.static(path.join(__dirname, "public"))); // This middleware serves static files from the "public" directory. It allows you to access files like CSS, images, and JavaScript files directly from the browser without needing to define specific routes for them.
+app.use("/images", express.static(path.join(__dirname, "images")));
 
 app.use(
   session({
@@ -81,7 +109,7 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
-  throw new Error(err); //used in synchronous code blocks
+  // throw new Error(err); used in synchronous code blocks
 
   // User.findByPk(1)
   //   .then((user) => {
