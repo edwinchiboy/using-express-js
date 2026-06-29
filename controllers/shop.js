@@ -9,6 +9,8 @@ const Order = require("../models/order");
 const { where } = require("sequelize");
 const order = require("../models/order");
 
+const ITMES_PER_PAGE = 2;
+
 // exports.getProducts = (req, res, next) => {
 //   Product.fetchAll((products) => {
 //     res.render("shop/product-list", {
@@ -45,13 +47,29 @@ const order = require("../models/order");
 // };
 
 exports.getProducts = (req, res, next) => {
-  // Product.findAll()
+  const page = +req.query.page || 1;
+  let totalItems;
+
   Product.find()
+    .countDocuments()
+    .then((numProducts) => {
+      totalItems = numProducts;
+      return Product.find()
+        .skip((page - 1) * ITMES_PER_PAGE)
+        .limit(ITMES_PER_PAGE);
+    })
+    // Product.findAll()
     .then((products) => {
       res.render("shop/product-list", {
         prods: products,
         pageTitle: "All Products",
         path: "/products",
+        currentPage: page,
+        hasNextPage: ITMES_PER_PAGE * page < totalItems,
+        hasPreviousPage: page > 1,
+        nextPage: page + 1,
+        previousPage: page - 1,
+        lastPage: Math.ceil(totalItems / ITMES_PER_PAGE),
       });
     })
     .catch((err) => {
@@ -101,9 +119,7 @@ exports.getProducts = (req, res, next) => {
 
 exports.getProduct = (req, res, next) => {
   const prodId = req.params.productId;
-  console.log("Referer:", req.headers.referer);
-  console.log("URL:", req.originalUrl);
-  console.log("Product ID:", req.params.productId);
+
   Product.findById(prodId)
     .then((product) => {
       res.render("shop/product-detail", {
@@ -171,13 +187,28 @@ exports.getProduct = (req, res, next) => {
 // };
 
 exports.getIndex = (req, res, next) => {
+  const page = +req.query.page || 1;
+  let totalItems;
   // Product.findAll()
   Product.find()
+    .countDocuments()
+    .then((numProducts) => {
+      totalItems = numProducts;
+      return Product.find()
+        .skip((page - 1) * ITMES_PER_PAGE)
+        .limit(ITMES_PER_PAGE);
+    })
     .then((products) => {
       res.render("shop/index", {
         prods: products,
         pageTitle: "Shop",
         path: "/",
+        currentPage: page,
+        hasNextPage: ITMES_PER_PAGE * page < totalItems,
+        hasPreviousPage: page > 1,
+        nextPage: page + 1,
+        previousPage: page - 1,
+        lastPage: Math.ceil(totalItems / ITMES_PER_PAGE),
       });
     })
     .catch((err) => {
