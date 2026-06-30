@@ -14,6 +14,9 @@ const multer = require("multer");
 const expressHbs = require("express-handlebars");
 // const mongoConnect = require("./util/database").mongoConnect;
 const User = require("./models/user");
+const isAuth = require("./middleware/is_auth");
+
+const shopController = require("./controllers/shop");
 
 const MONGODB_URI =
   "mongodb+srv://choboyedeh17:Qwert%212345@cluster0.pnin6iw.mongodb.net/shop?appName=Cluster0";
@@ -99,12 +102,8 @@ app.use(
   }),
 );
 
-app.use(csrfProtection);
-app.use(flash());
-
 app.use((req, res, next) => {
   res.locals.isAuthenticated = req.session.isLoggedIn;
-  res.locals.csrfToken = req.csrfToken();
   next();
 });
 
@@ -136,6 +135,17 @@ app.use((req, res, next) => {
       next(new Error(err)); // Used in async code blocks
     });
 });
+
+app.post("/create-order", isAuth, shopController.postOrder);
+
+app.use(csrfProtection);
+
+app.use((req, res, next) => {
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+
+app.use(flash());
 
 app.use("/admin", adminRoute); // This middleware will be executed for any route that starts with "/admin". It will pass the request to the adminRoutes router for further handling.
 app.use(shopRoutes);
@@ -190,8 +200,9 @@ app.use(errorController.get404); // This line adds a middleware function to hand
 
 app.use((error, req, res, next) => {
   res.status(500).render("500", {
-    pageTitle: "Error",
     path: "/500",
+    isAuthenticated: req.session?.isLoggedIn || false,
+    csrfToken: req.csrfToken ? req.csrfToken() : null,
   });
 });
 
